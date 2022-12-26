@@ -7,8 +7,15 @@
 struct map {
   using container = std::vector<std::vector<map_cell>>;
 
-  map() = default;
-  map(int h, int w) : height_{h}, width_{w}, map_{} {}
+  map(int h, int w) : height_{h}, width_{w}, map_{} {
+    map_.resize(height_);
+    for (int i = 0; i < width_; ++i) {
+      map_[i].resize(height_);
+      for (int j = 0; j < height_; ++j) {
+        map_[i][j].coordinates = {i, j};
+      }
+    }
+  }
 
   map_cell &at(const position &pos) { return map_[pos.x][pos.y]; }
   const map_cell &at(const position &pos) const {
@@ -16,7 +23,7 @@ struct map {
   }
 
   bool valid(const position &pos) const {
-    return pos.x >= 0 && pos.y >= 0 & pos.x < height() && pos.y < width();
+    return pos.x >= 0 && pos.y >= 0 & pos.x < width_ && pos.y < height_;
   }
 
   int height() const { return height_; }
@@ -38,15 +45,8 @@ private:
   container map_;
 
   friend inline std::istream &operator>>(std::istream &in, map &map) {
-    int width;
-    int height;
-    in >> width >> height;
-    in.ignore();
-    map.map_.resize(height);
-    for (int i = 0; i < height; ++i) {
-      map.map_[i].resize(width);
-      for (int j = 0; j < width; ++j) {
-        map.map_[i][j].coordinates = {i, j};
+    for (int i = 0; i < map.width_; ++i) {
+      for (int j = 0; j < map.height_; ++j) {
         auto &cell = map.map_[i][j];
         in >> cell;
       }

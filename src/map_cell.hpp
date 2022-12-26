@@ -18,6 +18,9 @@ struct map_cell {
 inline std::istream &operator>>(std::istream &in, map_cell &cell) {
   in >> cell.scrap_amount >> cell.owner >> cell.units >> cell.recycler >>
       cell.can_build >> cell.can_spawn >> cell.in_range_of_recycler;
-  in.ignore();
   return in;
+}
+
+inline std::ostream& operator<<(std::ostream& out, const map_cell& cell) {
+  return out << '{' << cell.coordinates << ", value: " << cell.scrap_amount << '}';
 }

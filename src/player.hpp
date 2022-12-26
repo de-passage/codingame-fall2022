@@ -12,3 +12,7 @@ inline std::istream& operator>>(std::istream& in, player& pl) {
     else pl = player::neutral;
     return in;
 }
+
+inline std::ostream& operator<<(std::ostream& out, player pl) {
+  return out << (pl == player::me ? "me" : pl == player::opponent ? "opponent" : "neutral");
+}
