@@ -1,6 +1,8 @@
 # Thanks to Job Vranish (https://spin.atomicobject.com/2016/08/26/makefile-c-projects/)
 TARGET_EXEC := final_program
 
+OPPONENT ?= dumb
+
 BUILD_DIR := ./build
 SRC_DIRS := ./src
 
@@ -12,6 +14,8 @@ GENERATED_SRCS := $(GENERATED_DIR)/generated.cpp
 # String substitution for every C/C++ file.
 # As an example, hello.cpp turns into ./build/hello.cpp.o
 GENERATED_OBJS := $(GENERATED_SRCS:%=$(BUILD_DIR)/%.o)
+
+TARGET_PATH := $(BUILD_DIR)/$(TARGET_EXEC)
 
 # String substitution (suffix version without %).
 # As an example, ./build/hello.cpp.o turns into ./build/hello.cpp.d
@@ -28,8 +32,11 @@ CPPFLAGS := $(INC_FLAGS)
 
 SRC_DEPS := $(shell find $(SRC_DIRS) -name '*.cpp' -or -name '*.c' -or -name '*.s')
 
-build: $(GENERATED_SRCS)
-	cp $(GENERATED_SRCS) /mnt/c/Users/sylvain/Documents/Workspace/codingame/test.cpp
+build: $(BUILD_DIR)/$(TARGET_EXEC)
+	$(MAKE) $(GENERATED_SRCS)
+
+test: build
+	./scripts/launcher.bash -p1 $(TARGET_PATH) -p2 ais/$(OPPONENT) -s -t 4 -n 10
 
 # The final build step.
 $(BUILD_DIR)/$(TARGET_EXEC): $(GENERATED_OBJS)
@@ -49,7 +56,7 @@ $(GENERATED_SRCS):
 	mkdir -p $(GENERATED_DIR)
 	../combine/combine.bash -o $(GENERATED_SRCS) src/main.cpp $(INC_FLAGS)
 
-.PHONY: clean $(GENERATED_SRCS) build
+.PHONY: clean $(GENERATED_SRCS) build release test
 clean:
 	rm -r $(BUILD_DIR)
 

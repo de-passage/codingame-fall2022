@@ -22,8 +22,14 @@ struct map {
     return const_cast<map *>(this)->at(pos);
   }
 
+  /// Return true iff the position is inside the boundaries of the map
   bool valid(const position &pos) const {
     return pos.x >= 0 && pos.y >= 0 & pos.x < width_ && pos.y < height_;
+  }
+
+  /// Return true iff the position can be moved to (valid & non grass)
+  bool walkable(const position& pos) const {
+    return valid(pos) && at(pos).scrap_amount > 0;
   }
 
   int height() const { return height_; }
