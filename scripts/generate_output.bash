@@ -20,6 +20,7 @@ while (( $# > 0 )); do
         err "$1 expects a seed as parameter"
       fi
       SEED="$2"
+      shift
       ;;
     --p1)
       if [[ -x "$2" ]]; then
@@ -27,10 +28,12 @@ while (( $# > 0 )); do
       else
         err "$1 expects an executable file as parameter"
       fi
+      shift
       ;;
     --p2)
       if [[ -x "$2" ]]; then
         PLAYER_2="$2"
+        shift
       else
         err "$1 expects an executable file as parameter"
       fi
@@ -40,9 +43,11 @@ while (( $# > 0 )); do
         err "$1 expects a file name as parameter"
       fi
       OUTPUT_FILE="$2"
+      shift
       ;;
     *) ;;
   esac
+  shift
 done
 
 cmd="java -jar '$HOME/workspace/codingame-fall2022/ais/referee.jar' -p1 '${PLAYER_1}' -p2 '${PLAYER_2}' -l '${OUTPUT_FILE}'"
