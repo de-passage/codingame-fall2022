@@ -2,9 +2,9 @@
 #include <iostream>
 
 struct position {
-  position() = default;
-  position(position const &) = default;
-  position(int x, int y) : x{x}, y{y} {}
+  constexpr position() = default;
+  constexpr position(position const &) = default;
+  constexpr position(int x, int y) : x{x}, y{y} {}
   int x = 0;
   int y = 0;
 

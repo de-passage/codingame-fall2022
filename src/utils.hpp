@@ -2,6 +2,7 @@
 
 #include "map_cell.hpp"
 #include "map.hpp"
+#include "position.hpp"
 
 struct index_by_bot_number {
   bool operator()(const map_cell &left, const map_cell &right) const {
@@ -16,7 +17,19 @@ struct position_with_value {
     int value;
 };
 
+struct position_with_value_hash {
+  std::size_t operator()(const position_with_value& p) const {
+    return position_hash{}(p.pos) ^ std::hash<int>{}(p.value);
+  }
+};
+
 struct index_by_value {
+  bool operator()(const position_with_value &left, const position_with_value &right) const {
+    return left.value < right.value;
+  }
+};
+
+struct index_by_lesser_value {
   bool operator()(const position_with_value &left, const position_with_value &right) const {
     return left.value < right.value;
   }
@@ -36,4 +49,10 @@ inline int value_of(const map& map, const position& pos) {
         }
     }
     return sum;
+}
+
+inline size_t distance_squared(const position& p1, const position& p2) {
+  int dx = p1.x - p2.x;
+  int dy = p1.y - p2.y;
+  return dx*dx + dy*dy;
 }
