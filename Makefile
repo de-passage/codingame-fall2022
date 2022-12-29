@@ -1,7 +1,7 @@
 # Thanks to Job Vranish (https://spin.atomicobject.com/2016/08/26/makefile-c-projects/)
 TARGET_EXEC := final_program
 
-OPPONENT ?= dumb
+OPPONENT ?= basic
 
 BUILD_DIR := ./build
 SRC_DIRS := ./src
@@ -36,7 +36,7 @@ build: $(BUILD_DIR)/$(TARGET_EXEC)
 	$(MAKE) $(GENERATED_SRCS)
 
 test: build
-	./scripts/launcher.bash -p1 $(TARGET_PATH) -p2 ais/$(OPPONENT) -s -t 4 -n 10
+	./scripts/launcher.bash -p1 $(TARGET_PATH) -p2 ais/$(OPPONENT) -s -t 8 -n 12
 
 # The final build step.
 $(BUILD_DIR)/$(TARGET_EXEC): $(GENERATED_OBJS)
