@@ -40,8 +40,8 @@ test: build
 	./scripts/launcher.bash -p1 $(TARGET_PATH) -p2 ais/$(OPPONENT) -s -t 8 -n 12
 
 release:
-	mkdir -p $(GENERATED_DIR)
-	../combine/combine.bash -o $(GENERATED_SRCS) src/main.cpp $(INC_FLAGS)
+	@mkdir -p $(GENERATED_DIR)
+	scripts/combine.bash -o $(GENERATED_SRCS) $(SRCS) $(INC_FLAGS)
 
 # The final build step.
 $(BUILD_DIR)/$(TARGET_EXEC): $(OBJS)
@@ -49,12 +49,12 @@ $(BUILD_DIR)/$(TARGET_EXEC): $(OBJS)
 
 # Build step for C source
 $(BUILD_DIR)/%.c.o: %.c
-	mkdir -p $(dir $@)
+	@mkdir -p $(dir $@)
 	$(CC) $(CPPFLAGS) $(CFLAGS) -c $< -o $@
 
 # Build step for C++ source
 $(BUILD_DIR)/%.cpp.o: %.cpp
-	mkdir -p $(dir $@)
+	@mkdir -p $(dir $@)
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c $< -o $@
 
 .PHONY: clean build release test

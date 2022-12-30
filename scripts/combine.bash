@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 #
-# Combine a C/C++ file and its dependencies into a single file.
-# Only supports header files for now
+# Combine C/C++ files and their dependencies into a single file.
 
 unset source_file
 declare target_file="result.cpp"
@@ -91,26 +90,20 @@ while (( $# > 0 )); do
       done
       ;;
     *)
-      if [[ -z "$source_file" ]]; then
-        source_file="$1"
-      else
-        err "Source file was already declared (${source_file})"
-      fi
+      source_file+=("$1")
       ;;
   esac
   shift
 done
 
-# current_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
-
-if [[ ! -f "$source_file" ]]; then
-  err "'$source_file' not a valid source file"
+if (( ${#source_file[@]} == 0 )); then
+  err "Need at least one source file"
 fi
 
 temp_file=$(mktemp)
 trap 'rm "$temp_file"' EXIT
 
-cp "$source_file" "$temp_file"
+cat "${source_file[@]}" > "$temp_file"
 
 declare -A already_included=()
 
