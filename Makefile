@@ -6,6 +6,8 @@ OPPONENT ?= basic
 BUILD_DIR := ./build
 SRC_DIRS := ./src
 
+SRCS := $(shell find $(SRC_DIRS) -type f -name '*.cpp')
+
 # Find all the C and C++ files we want to compile
 # Note the single quotes around the * expressions. Make will incorrectly expand these otherwise.
 GENERATED_DIR := ./generated
@@ -13,7 +15,7 @@ GENERATED_SRCS := $(GENERATED_DIR)/generated.cpp
 
 # String substitution for every C/C++ file.
 # As an example, hello.cpp turns into ./build/hello.cpp.o
-GENERATED_OBJS := $(GENERATED_SRCS:%=$(BUILD_DIR)/%.o)
+OBJS := $(SRCS:%=$(BUILD_DIR)/%.o)
 
 TARGET_PATH := $(BUILD_DIR)/$(TARGET_EXEC)
 
@@ -28,19 +30,22 @@ INC_FLAGS := $(addprefix -I,$(INC_DIRS))
 
 # The -MMD and -MP flags together generate Makefiles for us!
 # These files will have .d instead of .o as the output.
-CPPFLAGS := $(INC_FLAGS)
+CPPFLAGS := -MMD -MP $(INC_FLAGS)
 
 SRC_DEPS := $(shell find $(SRC_DIRS) -name '*.cpp' -or -name '*.c' -or -name '*.s')
 
 build: $(BUILD_DIR)/$(TARGET_EXEC)
-	$(MAKE) $(GENERATED_SRCS)
 
 test: build
 	./scripts/launcher.bash -p1 $(TARGET_PATH) -p2 ais/$(OPPONENT) -s -t 8 -n 12
 
+release:
+	mkdir -p $(GENERATED_DIR)
+	../combine/combine.bash -o $(GENERATED_SRCS) src/main.cpp $(INC_FLAGS)
+
 # The final build step.
-$(BUILD_DIR)/$(TARGET_EXEC): $(GENERATED_OBJS)
-	$(CXX) $(GENERATED_OBJS) -o $@ $(LDFLAGS)
+$(BUILD_DIR)/$(TARGET_EXEC): $(OBJS)
+	$(CXX) $(OBJS) -o $@ $(LDFLAGS)
 
 # Build step for C source
 $(BUILD_DIR)/%.c.o: %.c
@@ -48,15 +53,11 @@ $(BUILD_DIR)/%.c.o: %.c
 	$(CC) $(CPPFLAGS) $(CFLAGS) -c $< -o $@
 
 # Build step for C++ source
-$(BUILD_DIR)/%.cpp.o: %.cpp $(GENERATED_SRCS)
+$(BUILD_DIR)/%.cpp.o: %.cpp
 	mkdir -p $(dir $@)
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c $< -o $@
 
-$(GENERATED_SRCS):
-	mkdir -p $(GENERATED_DIR)
-	../combine/combine.bash -o $(GENERATED_SRCS) src/main.cpp $(INC_FLAGS)
-
-.PHONY: clean $(GENERATED_SRCS) build release test
+.PHONY: clean build release test
 clean:
 	rm -r $(BUILD_DIR)
 
