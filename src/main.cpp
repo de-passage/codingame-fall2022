@@ -63,7 +63,7 @@ int main(int argc, const char **argv) {
     cin >> my_matter >> opp_matter;
     cin >> map;
 
-    priority_queue<map_cell, vector<map_cell>, index_by_bot_number> units;
+    priority_queue<const map_cell*, vector<const map_cell*>, index_by_bot_number> units;
     priority_queue<position_with_value, vector<position_with_value>,
                    index_by_value>
         build_candidates;
@@ -79,13 +79,14 @@ int main(int argc, const char **argv) {
       for (int j = 0; j < map.height(); ++j) {
         const auto &cell = map[i][j];
         if (cell.owner == player::me && cell.units > 0) {
-          units.emplace(cell);
+          units.emplace(addressof(cell));
         }
 
         if (cell.owner == player::me) {
-          int nb = neighboring_ennemies(map, cell.coordinates);
-          if (cell.can_build && nb > 0) {
-            build_candidates.emplace(position_with_value(cell.coordinates, nb));
+          int enemies = neighboring_ennemies(map, cell.coordinates);
+          if (cell.can_build && enemies > 0) {
+            int allies = neighboring_allies(map, cell.coordinates);
+            build_candidates.emplace(position_with_value(cell.coordinates, allies - enemies));
           } else if (cell.can_spawn) {
             spawnable_cells.push_back(addressof(cell));
           }
@@ -98,9 +99,8 @@ int main(int argc, const char **argv) {
     for (auto *my_cell : spawnable_cells) {
       int current_radius = numeric_limits<int>::max();
       int current_nb = 0;
-      fill_cache(map, cache, my_cell->coordinates);
       for (auto *ennemy : ennemies) {
-        int d = get_distance(my_cell->coordinates, ennemy->coordinates, cache);
+        int d = distance_squared(my_cell->coordinates, ennemy->coordinates);
         if (d > 0 && d < current_radius) {
           current_radius = d;
           current_nb = ennemy->units;
@@ -134,9 +134,9 @@ int main(int argc, const char **argv) {
       auto cell = units.top();
       units.pop();
 
-      auto target = closest_non_controlled(map, cell.coordinates);
-      if (target != cell.coordinates) {
-        cout << "MOVE " << cell.units << ' ' << cell.coordinates << ' '
+      auto target = closest_non_controlled(map, cell->coordinates);
+      if (target != cell->coordinates) {
+        cout << "MOVE " << cell->units << ' ' << cell->coordinates << ' '
              << target << ';';
       }
     }

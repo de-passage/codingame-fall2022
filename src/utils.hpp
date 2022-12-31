@@ -8,6 +8,9 @@ struct index_by_bot_number {
   bool operator()(const map_cell &left, const map_cell &right) const {
     return left.units < right.units;
   }
+  bool operator()(const map_cell *left, const map_cell *right) const {
+    return left->units < right->units;
+  }
 };
 
 struct position_with_value {
