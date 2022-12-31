@@ -30,7 +30,7 @@ INC_FLAGS := $(addprefix -I,$(INC_DIRS))
 
 # The -MMD and -MP flags together generate Makefiles for us!
 # These files will have .d instead of .o as the output.
-CPPFLAGS := -MMD -MP $(INC_FLAGS)
+CPPFLAGS := -std=c++17 -MMD -MP $(INC_FLAGS)
 
 SRC_DEPS := $(shell find $(SRC_DIRS) -name '*.cpp' -or -name '*.c' -or -name '*.s')
 
@@ -39,7 +39,7 @@ build: $(BUILD_DIR)/$(TARGET_EXEC)
 test: build
 	./scripts/launcher.bash -p1 $(TARGET_PATH) -p2 ais/$(OPPONENT) -s -t 8 -n 12
 
-release:
+release: build
 	@mkdir -p $(GENERATED_DIR)
 	scripts/combine.bash -o $(GENERATED_SRCS) $(SRCS) $(INC_FLAGS)
 

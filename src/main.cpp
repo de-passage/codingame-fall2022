@@ -8,13 +8,13 @@
 #include <unordered_set>
 #include <vector>
 
+#include "algorithms.hpp"
 #include "distance_cache.hpp"
 #include "map.hpp"
 #include "map_cell.hpp"
 #include "player.hpp"
 #include "position.hpp"
 #include "utils.hpp"
-#include "algorithms.hpp"
 
 using namespace std;
 
@@ -63,7 +63,9 @@ int main(int argc, const char **argv) {
     cin >> my_matter >> opp_matter;
     cin >> map;
 
-    priority_queue<const map_cell*, vector<const map_cell*>, index_by_bot_number> units;
+    priority_queue<const map_cell *, vector<const map_cell *>,
+                   index_by_bot_number>
+        units;
     priority_queue<position_with_value, vector<position_with_value>,
                    index_by_value>
         build_candidates;
@@ -84,9 +86,10 @@ int main(int argc, const char **argv) {
 
         if (cell.owner == player::me) {
           int enemies = neighboring_ennemies(map, cell.coordinates);
-          if (cell.can_build && enemies > 0) {
+          if (cell.can_build && enemies > 0 && walkable_neighbors(map, cell.coordinates) > 1) {
             int allies = neighboring_allies(map, cell.coordinates);
-            build_candidates.emplace(position_with_value(cell.coordinates, allies - enemies));
+            build_candidates.emplace(
+                position_with_value(cell.coordinates, allies - enemies));
           } else if (cell.can_spawn) {
             spawnable_cells.push_back(addressof(cell));
           }
@@ -97,17 +100,8 @@ int main(int argc, const char **argv) {
     }
 
     for (auto *my_cell : spawnable_cells) {
-      int current_radius = numeric_limits<int>::max();
-      int current_nb = 0;
-      for (auto *ennemy : ennemies) {
-        int d = distance_squared(my_cell->coordinates, ennemy->coordinates);
-        if (d > 0 && d < current_radius) {
-          current_radius = d;
-          current_nb = ennemy->units;
-        } else if (d == current_radius) {
-          current_nb += ennemy->units;
-        }
-      }
+      auto [current_radius, current_nb] =
+          most_threatening(my_cell->coordinates, ennemies);
       spawn_candidates.emplace(position{my_cell->coordinates}, current_radius,
                                current_nb);
     }
@@ -122,6 +116,7 @@ int main(int argc, const char **argv) {
     while (my_matter >= ROBOT_COST && !spawn_candidates.empty()) {
       auto cell = spawn_candidates.top();
       spawn_candidates.pop();
+      if (will_disappear(map, cell.coordinates)) continue;
       int possible = 1;
       if (cell.distance <= 1) {
         possible = min(my_matter / ROBOT_COST, cell.strength);
@@ -134,7 +129,7 @@ int main(int argc, const char **argv) {
       auto cell = units.top();
       units.pop();
 
-      auto target = closest_non_controlled(map, cell->coordinates);
+      auto target = closest_non_controlled(map, cell->coordinates, ennemies);
       if (target != cell->coordinates) {
         cout << "MOVE " << cell->units << ' ' << cell->coordinates << ' '
              << target << ';';

@@ -4,6 +4,19 @@
 #include <istream>
 #include <vector>
 
+struct cell_ptr {
+private:
+  const struct map *map_;
+  const map_cell *cell_;
+
+public:
+  constexpr cell_ptr(const struct map *m, const map_cell *cell)
+      : map_(m), cell_(cell) {}
+
+  const map &map() const { return *map_; }
+  const map_cell &cell() const { return *cell_; }
+};
+
 struct map {
   using container = std::vector<std::vector<map_cell>>;
 
@@ -18,8 +31,14 @@ struct map {
   }
 
   map_cell &at(const position &pos) { return map_[pos.x][pos.y]; }
+
   const map_cell &at(const position &pos) const {
     return const_cast<map *>(this)->at(pos);
+  }
+
+  cell_ptr cell_ptr(const position& pos) const {
+    const struct cell_ptr c{this, std::addressof(at(pos))};
+    return c;
   }
 
   /// Return true iff the position is inside the boundaries of the map
@@ -28,21 +47,17 @@ struct map {
   }
 
   /// Return true iff the position can be moved to (valid & non grass)
-  bool walkable(const position& pos) const {
-    return valid(pos) && at(pos).scrap_amount > 0;
+  bool walkable(const position &pos) const {
+    return valid(pos) && at(pos).walkable();
   }
 
   int height() const { return height_; }
 
   int width() const { return width_; }
 
-  const std::vector<map_cell>& operator[](int x) {
-    return map_[x];
-  }
+  const std::vector<map_cell> &operator[](int x) { return map_[x]; }
 
-  const std::vector<map_cell>& operator[](int x) const {
-    return map_[x];
-  }
+  const std::vector<map_cell> &operator[](int x) const { return map_[x]; }
 
 private:
   int height_;

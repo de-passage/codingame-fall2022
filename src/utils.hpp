@@ -1,5 +1,6 @@
 #pragma once
 
+#include "algorithms.hpp"
 #include "map_cell.hpp"
 #include "map.hpp"
 #include "position.hpp"
@@ -11,6 +12,15 @@ struct index_by_bot_number {
   bool operator()(const map_cell *left, const map_cell *right) const {
     return left->units < right->units;
   }
+};
+
+struct index_by_exploration_value {
+  // bool operator()(const cell_ptr *left, const cell_ptr *right) const {
+  //   return operator()(*left, *right);
+  // }
+  // bool operator()(const cell_ptr &left, const cell_ptr &right) const {
+  //   int left_walkable()
+  // }
 };
 
 struct position_with_value {

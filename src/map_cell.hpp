@@ -13,6 +13,10 @@ struct map_cell {
   int can_spawn;
   int in_range_of_recycler;
   position coordinates;
+
+  bool walkable() const {
+    return scrap_amount > 0 && recycler == 0;
+  }
 };
 
 inline std::istream &operator>>(std::istream &in, map_cell &cell) {
