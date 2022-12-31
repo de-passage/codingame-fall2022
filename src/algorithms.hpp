@@ -13,6 +13,7 @@ most_threatening(const position &start,
                  const std::vector<const map_cell *> &ennemies);
 
 bool will_disappear(const map& map, const position& cell);
+bool can_reach_uncontrolled(const map &m, const position &start);
 
 template <class F>
 constexpr int count_neighbors(const map &map, const position &source, F &&func) {

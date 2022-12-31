@@ -3,9 +3,37 @@
 #include "utils.hpp"
 
 #include <algorithm>
+#include <queue>
 #include <stack>
 #include <unordered_set>
 #include <vector>
+
+bool can_reach_uncontrolled(const map &m, const position &start) {
+  std::unordered_set<position, position_hash> visited;
+  std::queue<position> to_visit;
+  visited.emplace(start);
+  to_visit.emplace(start);
+
+  while (!to_visit.empty()) {
+    position current = to_visit.front();
+    to_visit.pop();
+    for (auto offset : {position{1, 0}, {-1, 0}, {0, 1}, {0, -1}}) {
+      auto next = current = offset;
+      auto cell = m.at(next);
+      if (cell.walkable()) {
+        if (cell.owner != player::me) {
+          return true;
+        }
+
+        if (!visited.count(next)) {
+          visited.emplace(next);
+          to_visit.push(next);
+        }
+      }
+    }
+  }
+  return false;
+}
 
 position closest_non_controlled(const map &m, const position &start,
                                 const std::vector<const map_cell *> &ennemies) {
@@ -32,7 +60,8 @@ position closest_non_controlled(const map &m, const position &start,
     for (position offset : pos) {
       position next_pos = current + offset;
       if (m.walkable(next_pos)) {
-        if (m.at(next_pos).owner != player::me) {
+        if (m.at(next_pos).owner != player::me &&
+            !will_disappear(m, next_pos)) {
           return next_pos;
         } else if (!visited.count(next_pos)) {
           visited.emplace(next_pos);

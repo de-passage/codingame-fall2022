@@ -13,7 +13,7 @@ public:
   constexpr cell_ptr(const struct map *m, const map_cell *cell)
       : map_(m), cell_(cell) {}
 
-  const map &map() const { return *map_; }
+  const map &get_map() const { return *map_; }
   const map_cell &cell() const { return *cell_; }
 };
 
@@ -36,7 +36,7 @@ struct map {
     return const_cast<map *>(this)->at(pos);
   }
 
-  cell_ptr cell_ptr(const position& pos) const {
+  cell_ptr get_cell_ptr(const position& pos) const {
     const struct cell_ptr c{this, std::addressof(at(pos))};
     return c;
   }

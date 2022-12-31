@@ -1,6 +1,8 @@
 #include <algorithm>
+#include <chrono>
 #include <iostream>
 #include <limits>
+#include <ostream>
 #include <queue>
 #include <stack>
 #include <string>
@@ -10,6 +12,7 @@
 
 #include "algorithms.hpp"
 #include "distance_cache.hpp"
+#include "island.hpp"
 #include "map.hpp"
 #include "map_cell.hpp"
 #include "player.hpp"
@@ -80,13 +83,16 @@ int main(int argc, const char **argv) {
     for (int i = 0; i < map.width(); ++i) {
       for (int j = 0; j < map.height(); ++j) {
         const auto &cell = map[i][j];
+
+        // find all my units
         if (cell.owner == player::me && cell.units > 0) {
           units.emplace(addressof(cell));
         }
 
         if (cell.owner == player::me) {
           int enemies = neighboring_ennemies(map, cell.coordinates);
-          if (cell.can_build && enemies > 0 && walkable_neighbors(map, cell.coordinates) > 1) {
+          if (cell.can_build && enemies > 0 &&
+              walkable_neighbors(map, cell.coordinates) > 1) {
             int allies = neighboring_allies(map, cell.coordinates);
             build_candidates.emplace(
                 position_with_value(cell.coordinates, allies - enemies));
@@ -97,6 +103,23 @@ int main(int argc, const char **argv) {
           ennemies.push_back(addressof(cell));
         }
       }
+    }
+
+    island_container islands;
+    for (int i = 0; i < map.width(); ++i) {
+      for (int j = 0; j < map.height(); ++j) {
+        fill_island(islands, map, position{i, j});
+      }
+    }
+
+    for (auto &island : islands) {
+      cerr << "Island: my(" << island.my_cells << ") opponent("
+           << island.opponent_cells << ") neutral (" << island.unclaimed_cells
+           << ")\n";
+      for (auto &it : island.cells) {
+        cerr << '(' << it << ") ";
+      }
+      cerr << endl;
     }
 
     for (auto *my_cell : spawnable_cells) {
@@ -116,7 +139,9 @@ int main(int argc, const char **argv) {
     while (my_matter >= ROBOT_COST && !spawn_candidates.empty()) {
       auto cell = spawn_candidates.top();
       spawn_candidates.pop();
-      if (will_disappear(map, cell.coordinates)) continue;
+      auto &island = island_containing(islands, cell.coordinates);
+      if (will_disappear(map, cell.coordinates) || island.opponent_cells == 0)
+        continue;
       int possible = 1;
       if (cell.distance <= 1) {
         possible = min(my_matter / ROBOT_COST, cell.strength);
@@ -136,5 +161,6 @@ int main(int argc, const char **argv) {
       }
     }
     cout << "MESSAGE " << message << endl;
+    cerr << flush;
   }
 }
