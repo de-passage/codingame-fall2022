@@ -129,7 +129,7 @@ while true; do
 done
 
 # Cleanup
-remaining_includes=$(sed -n '/^\s*#include\s\+<\([^>]*\)>/p' "$temp_file")
+remaining_includes=$(sed -n '/^\s*#include\s\+<\([^>]*\)>/p' "$temp_file" | sort | uniq)
 sed '/^\s*#include\s\+<\([^>]*\)>/d;/^\s*#pragma\s\+once/d' -i "$temp_file"
 echo "$remaining_includes" > "$target_file"
 cat "$temp_file" >> "$target_file"
