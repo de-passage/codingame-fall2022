@@ -1,4 +1,5 @@
 #include "algorithms.hpp"
+#include "island.hpp"
 #include "map_cell.hpp"
 #include "utils.hpp"
 
@@ -35,7 +36,7 @@ bool can_reach_uncontrolled(const map &m, const position &start) {
   return false;
 }
 
-position closest_non_controlled(const map &m, const position &start,
+position closest_non_controlled(const island_container& islands, const map &m, const position &start,
                                 const std::vector<const map_cell *> &ennemies) {
   using namespace std;
 
@@ -50,8 +51,8 @@ position closest_non_controlled(const map &m, const position &start,
     to_visit.pop();
     sort(begin(pos), end(pos),
          [&](const position &left, const position &right) {
-           auto left_threat = most_threatening(left, ennemies);
-           auto right_threat = most_threatening(right, ennemies);
+           auto left_threat = most_threatening(islands, left, ennemies);
+           auto right_threat = most_threatening(islands, right, ennemies);
 
            if (left_threat.first == right_threat.first)
              return left_threat.second < right_threat.second;
@@ -94,11 +95,12 @@ int neighboring_recyclers(const map &map, const position &source) {
 }
 
 std::pair<int, int>
-most_threatening(const position &current,
+most_threatening(const island_container &islands, const position &current,
                  const std::vector<const map_cell *> &ennemies) {
   int current_radius = std::numeric_limits<int>::max();
   int current_nb = 0;
   for (auto *ennemy : ennemies) {
+    if (!same_island(islands, ennemy->coordinates, current)) continue;
     int d = distance_squared(current, ennemy->coordinates);
     if (d > 0 && d < current_radius) {
       current_radius = d;

@@ -67,3 +67,13 @@ const island& island_containing(const island_container& islands, const position&
   }
   assert(false && "Position without island");
 }
+
+bool same_island(const island_container &islands, const position &left, const position &right) {
+  for (auto& island : islands) {
+    bool has_left = island.cells.count(left) != 0;
+    bool has_right = island.cells.count(right) != 0;
+    if (has_left != has_right) return false;
+    if (has_left && has_right) return true;
+  }
+  return false;
+}

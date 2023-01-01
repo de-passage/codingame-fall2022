@@ -17,3 +17,4 @@ using island_container = std::vector<island>;
 
 void fill_island(island_container& islands, const map& map, const position& current);
 const island& island_containing(const island_container& islands, const position& position);
+bool same_island(const island_container& islands, const position& left, const position& right);

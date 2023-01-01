@@ -78,7 +78,7 @@ int main(int argc, const char **argv) {
         spawn_candidates;
 
     vector<const map_cell *> ennemies;
-    vector<const map_cell *> spawnable_cells;
+    vector<const map_cell *> my_cells;
 
     for (int i = 0; i < map.width(); ++i) {
       for (int j = 0; j < map.height(); ++j) {
@@ -90,14 +90,8 @@ int main(int argc, const char **argv) {
         }
 
         if (cell.owner == player::me) {
-          int enemies = neighboring_ennemies(map, cell.coordinates);
-          if (cell.can_build && enemies > 0 &&
-              walkable_neighbors(map, cell.coordinates) > 1) {
-            int allies = neighboring_allies(map, cell.coordinates);
-            build_candidates.emplace(
-                position_with_value(cell.coordinates, allies - enemies));
-          } else if (cell.can_spawn) {
-            spawnable_cells.push_back(addressof(cell));
+          if (cell.can_build || cell.can_spawn) {
+            my_cells.push_back(addressof(cell));
           }
         } else if (cell.owner == player::opponent && cell.units > 0) {
           ennemies.push_back(addressof(cell));
@@ -112,21 +106,19 @@ int main(int argc, const char **argv) {
       }
     }
 
-    for (auto &island : islands) {
-      cerr << "Island: my(" << island.my_cells << ") opponent("
-           << island.opponent_cells << ") neutral (" << island.unclaimed_cells
-           << ")\n";
-      for (auto &it : island.cells) {
-        cerr << '(' << it << ") ";
+    for (auto *cell : my_cells) {
+      int enemies = neighboring_ennemies(map, cell->coordinates);
+      if (cell->can_build && enemies > 0 &&
+          walkable_neighbors(map, cell->coordinates) > 1) {
+        int allies = neighboring_allies(map, cell->coordinates);
+        build_candidates.emplace(
+            position_with_value(cell->coordinates, allies - enemies));
+      } else if (cell->can_spawn) {
+        auto [current_radius, current_nb] =
+            most_threatening(islands, cell->coordinates, ennemies);
+        spawn_candidates.emplace(position{cell->coordinates}, current_radius,
+                                 current_nb);
       }
-      cerr << endl;
-    }
-
-    for (auto *my_cell : spawnable_cells) {
-      auto [current_radius, current_nb] =
-          most_threatening(my_cell->coordinates, ennemies);
-      spawn_candidates.emplace(position{my_cell->coordinates}, current_radius,
-                               current_nb);
     }
 
     while (my_matter >= BUILDER_COST && !build_candidates.empty()) {
@@ -154,9 +146,14 @@ int main(int argc, const char **argv) {
       auto cell = units.top();
       units.pop();
 
-      auto target = closest_non_controlled(map, cell->coordinates, ennemies);
+      auto target = closest_non_controlled(islands, map, cell->coordinates, ennemies);
       if (target != cell->coordinates) {
-        cout << "MOVE " << cell->units << ' ' << cell->coordinates << ' '
+        auto threat = neighboring_ennemies(map, target);
+        int response = cell->units;
+        if (threat < cell->units && !will_disappear(map,cell->coordinates)) {
+          response -= threat;
+        }
+        cout << "MOVE " << response << ' ' << cell->coordinates << ' '
              << target << ';';
       }
     }

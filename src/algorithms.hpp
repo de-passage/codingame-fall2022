@@ -1,15 +1,16 @@
 #pragma once
 
+#include "island.hpp"
 #include "map.hpp"
 #include "position.hpp"
 
 int neighboring_ennemies(const map &map, const position &source);
 int neighboring_allies(const map &map, const position &source);
-position closest_non_controlled(const map &map, const position &start,
+position closest_non_controlled(const island_container& islands, const map &map, const position &start,
                                 const std::vector<const map_cell *> &ennemies);
 int walkable_neighbors(const map& map, const position& source);
 std::pair<int, int>
-most_threatening(const position &start,
+most_threatening(const island_container &islands,const position &start,
                  const std::vector<const map_cell *> &ennemies);
 
 bool will_disappear(const map& map, const position& cell);
