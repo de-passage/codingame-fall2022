@@ -3,7 +3,10 @@
 
 struct position {
   constexpr position() = default;
-  constexpr position(position const &) = default;
+  constexpr position(const position &) = default;
+  constexpr position(position &&) = default;
+  position &operator=(const position &pos) = default;
+  position &operator=(position &&pos) = default;
   constexpr position(int x, int y) : x{x}, y{y} {}
   int x = 0;
   int y = 0;
@@ -24,7 +27,7 @@ struct position {
     return p1.x == p2.x && p1.y == p2.y;
   }
 
-  friend bool operator!=(const position& p1, const position& p2) {
+  friend bool operator!=(const position &p1, const position &p2) {
     return !(p1 == p2);
   }
 };

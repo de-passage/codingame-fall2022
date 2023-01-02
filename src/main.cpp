@@ -58,9 +58,47 @@ int main(int argc, const char **argv) {
   map map(width, height);
   distance_cache cache;
 
+  constexpr const char *lyrics[] = {"I am a bot", "and I live in a CPU",
+                                    "compute,compute,compute!", "...", "compute,compute,compute!", "Again!"};
+  unsigned int lyric_offset = 0;
+  constexpr unsigned int MAX_LYRICS_OFFSET = size(lyrics);
+  const auto next_lyrics = [&lyric_offset, &lyrics]() {
+    const char *ret = lyrics[lyric_offset];
+    lyric_offset = (lyric_offset + 1) % MAX_LYRICS_OFFSET;
+    return ret;
+  };
+
+  int my_matter;
+  int opp_matter;
+  cin >> my_matter >> opp_matter;
+  cin >> map;
+
+  vector<const map_cell *> ennemies;
+  vector<const map_cell *> my_cells;
+  for (int i = 0; i < map.width(); ++i) {
+    for (int j = 0; j < map.height(); ++j) {
+      const auto &cell = map[i][j];
+      if (cell.owner == player::me) {
+        if (cell.can_build) {
+          cout << "BUILD " << cell.coordinates << ';';
+        } else if (cell.units > 0) {
+          my_cells.push_back(addressof(cell));
+        }
+      } else if (cell.owner == player::opponent && cell.units > 0) {
+        ennemies.push_back(addressof(cell));
+      }
+    }
+  }
+  for (auto &c : my_cells) {
+    cout << "MOVE 1 " << c->coordinates << ' ' << ennemies.front()->coordinates << ';';
+  }
+  cout << "MESSAGE Let's go!" << endl;
+
   // game loop
   while (1) {
     cache.clear();
+    my_cells.clear();
+    ennemies.clear();
     int my_matter;
     int opp_matter;
     cin >> my_matter >> opp_matter;
@@ -76,9 +114,6 @@ int main(int argc, const char **argv) {
                    vector<position_with_distance_and_strength>,
                    index_by_distance_then_strength>
         spawn_candidates;
-
-    vector<const map_cell *> ennemies;
-    vector<const map_cell *> my_cells;
 
     for (int i = 0; i < map.width(); ++i) {
       for (int j = 0; j < map.height(); ++j) {
@@ -113,7 +148,10 @@ int main(int argc, const char **argv) {
         int allies = neighboring_allies(map, cell->coordinates);
         build_candidates.emplace(
             position_with_value(cell->coordinates, allies - enemies));
-      } else if (cell->can_spawn) {
+      } else if (cell->can_spawn &&
+                 has_invadable_neighbor(map, cell->coordinates) &&
+                 island_containing(islands, cell->coordinates)
+                         .non_disappearing_cells != 0) {
         auto [current_radius, current_nb] =
             most_threatening(islands, cell->coordinates, ennemies);
         spawn_candidates.emplace(position{cell->coordinates}, current_radius,
@@ -136,7 +174,7 @@ int main(int argc, const char **argv) {
         continue;
       int possible = 1;
       if (cell.distance <= 1) {
-        possible = min(my_matter / ROBOT_COST, cell.strength);
+        possible = max(min(my_matter / ROBOT_COST, cell.strength), 1);
       }
       my_matter -= (possible * ROBOT_COST);
       cout << "SPAWN " << possible << " " << cell.coordinates << ';';
@@ -146,18 +184,19 @@ int main(int argc, const char **argv) {
       auto cell = units.top();
       units.pop();
 
-      auto target = closest_non_controlled(islands, map, cell->coordinates, ennemies);
+      auto target =
+          closest_non_controlled(islands, map, cell->coordinates, ennemies);
       if (target != cell->coordinates) {
         auto threat = neighboring_ennemies(map, target);
         int response = cell->units;
-        if (threat < cell->units && !will_disappear(map,cell->coordinates)) {
+        if (threat < cell->units && !will_disappear(map, cell->coordinates)) {
           response -= threat;
         }
-        cout << "MOVE " << response << ' ' << cell->coordinates << ' '
-             << target << ';';
+        cout << "MOVE " << response << ' ' << cell->coordinates << ' ' << target
+             << ';';
       }
     }
-    cout << "MESSAGE " << message << endl;
+    cout << "MESSAGE " << next_lyrics() << endl;
     cerr << flush;
   }
 }

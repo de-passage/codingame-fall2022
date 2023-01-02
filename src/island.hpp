@@ -11,6 +11,7 @@ struct island {
   int unclaimed_cells = 0;
   int opponent_cells = 0;
   int my_cells = 0;
+  int non_disappearing_cells = 0;
 };
 
 using island_container = std::vector<island>;

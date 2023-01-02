@@ -46,6 +46,8 @@ void fill_island(island_container &islands, const map &map,
       break;
     }
 
+    if (current_cell.in_range_of_recycler == 0) this_island.non_disappearing_cells += 1;
+
     for (position offset : {position{1, 0}, {-1, 0}, {0, 1}, {0, -1}}) {
       auto next = current + offset;
       if (!map.valid(next)) continue;

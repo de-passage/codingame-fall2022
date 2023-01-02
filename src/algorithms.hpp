@@ -16,6 +16,8 @@ most_threatening(const island_container &islands,const position &start,
 bool will_disappear(const map& map, const position& cell);
 bool can_reach_uncontrolled(const map &m, const position &start);
 
+position closest_enemy(const map& map, const position& start);
+
 template <class F>
 constexpr int count_neighbors(const map &map, const position &source, F &&func) {
   using namespace std;
@@ -29,3 +31,6 @@ constexpr int count_neighbors(const map &map, const position &source, F &&func) 
   }
   return s;
 }
+
+bool has_invadable_neighbor(const map& map, const position& pos);
+int neighboring_recyclers(const map& map, const position& pos);

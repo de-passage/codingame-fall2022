@@ -9,6 +9,39 @@
 #include <unordered_set>
 #include <vector>
 
+template <class F, class T>
+std::remove_cv_t<T> bfs(const map &m, const position &start, T &&default_value,
+                        F &&func) {
+  std::unordered_set<position, position_hash> visited;
+  std::queue<position> to_visit;
+  visited.emplace(start);
+  to_visit.emplace(start);
+  bool result_found = false;
+  std::remove_cv_t<T> result = std::forward<T>(default_value);
+  const auto found_it = [&result_found, &result](auto &&given_result) {
+    result_found = true;
+    result = std::forward<decltype(given_result)>(given_result);
+  };
+
+  while (!to_visit.empty() && !result_found) {
+    position current = to_visit.front();
+    to_visit.pop();
+    for (auto offset : {position{1, 0}, {-1, 0}, {0, 1}, {0, -1}}) {
+      auto next = current = offset;
+      auto cell = m.at(next);
+      if (cell.walkable()) {
+        func(next, found_it);
+
+        if (!visited.count(next)) {
+          visited.emplace(next);
+          to_visit.push(next);
+        }
+      }
+    }
+  }
+  return result;
+}
+
 bool can_reach_uncontrolled(const map &m, const position &start) {
   std::unordered_set<position, position_hash> visited;
   std::queue<position> to_visit;
@@ -36,7 +69,8 @@ bool can_reach_uncontrolled(const map &m, const position &start) {
   return false;
 }
 
-position closest_non_controlled(const island_container& islands, const map &m, const position &start,
+position closest_non_controlled(const island_container &islands, const map &m,
+                                const position &start,
                                 const std::vector<const map_cell *> &ennemies) {
   using namespace std;
 
@@ -44,7 +78,7 @@ position closest_non_controlled(const island_container& islands, const map &m, c
   stack<position> to_visit;
   visited.emplace(start);
   to_visit.emplace(start);
-  vector<position> pos = {{-1, 0}, {1, 0}, {0, -1}, {0, 1}};
+  position pos[4] = {{-1, 0}, {1, 0}, {0, -1}, {0, 1}};
 
   while (!to_visit.empty()) {
     position current = to_visit.top();
@@ -55,8 +89,8 @@ position closest_non_controlled(const island_container& islands, const map &m, c
            auto right_threat = most_threatening(islands, right, ennemies);
 
            if (left_threat.first == right_threat.first)
-             return left_threat.second < right_threat.second;
-           return left_threat.first < right_threat.first;
+             return left_threat.second > right_threat.second;
+           return left_threat.first > right_threat.first;
          });
     for (position offset : pos) {
       position next_pos = current + offset;
@@ -100,7 +134,8 @@ most_threatening(const island_container &islands, const position &current,
   int current_radius = std::numeric_limits<int>::max();
   int current_nb = 0;
   for (auto *ennemy : ennemies) {
-    if (!same_island(islands, ennemy->coordinates, current)) continue;
+    if (!same_island(islands, ennemy->coordinates, current))
+      continue;
     int d = distance_squared(current, ennemy->coordinates);
     if (d > 0 && d < current_radius) {
       current_radius = d;
@@ -121,4 +156,19 @@ int walkable_neighbors(const map &map, const position &source) {
   return count_neighbors(map, source, [](const map_cell &cell) {
     return cell.walkable() ? 1 : 0;
   });
+}
+
+position closest_enemy(const map &map, const position &start) {
+  return bfs(map, start, position{-1, -1},
+             [&map](const position &p, auto &&found) {
+               auto &cell = map.at(p);
+               if (cell.owner == player::opponent && cell.units)
+                 found(p);
+             });
+}
+
+bool has_invadable_neighbor(const map &map, const position &pos) {
+  return count_neighbors(map, pos, [](const map_cell &cell) {
+           return cell.owner != player::me && cell.walkable();
+         }) > 0;
 }
